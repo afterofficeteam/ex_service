@@ -25,8 +25,8 @@ const (
 	ON u.id = w.user_id
 	where u.username = $1`
 
-	Createex_service = `INSERT INTO public.ex_services (user_id) 
-	values ($1) returning id as ex_service_id`
+	CreateWallet = `INSERT INTO public.wallet (user_id) 
+	values ($1) returning id as wallet_id`
 )
 
 var statement PreparedStatement
@@ -91,7 +91,7 @@ func (p *userRepo) Register(data *dto.RegisterReqDTO) (*dto.RegisterRespDTO, err
 		return nil, err
 	}
 
-	err = tx.QueryRow(Createex_service, resultData.ID).Scan(&resultData.WalletID)
+	err = tx.QueryRow(CreateWallet, resultData.ID).Scan(&resultData.WalletID)
 
 	if err != nil {
 		log.Println("Failed Query Create ex_service : ", err.Error())
