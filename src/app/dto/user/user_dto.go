@@ -25,7 +25,7 @@ func (dto *RegisterReqDTO) Validate() error {
 type RegisterRespDTO struct {
 	ID       int64  `json:"id" db:"id"`
 	UserName string `json:"username" db:"username"`
-	WalletID int64  `json:"ex_service_id" db:"ex_service_id"`
+	WalletID int64  `json:"wallet_id" db:"wallet_id"`
 	Token    string `json:"token"`
 }
 
