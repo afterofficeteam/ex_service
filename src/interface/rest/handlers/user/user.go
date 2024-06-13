@@ -10,12 +10,15 @@ import (
 	common_error "ex_service/src/infra/errors"
 	"ex_service/src/interface/rest/response"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/lib/pq"
 )
 
 type UserHandlerInterface interface {
 	Register(w http.ResponseWriter, r *http.Request)
 	Login(w http.ResponseWriter, r *http.Request)
+	LoginSocialMedia(w http.ResponseWriter, r *http.Request)
+	LoginSocialMediaCallback(w http.ResponseWriter, r *http.Request)
 }
 
 type userHandler struct {
@@ -30,6 +33,18 @@ func NewUserandler(r response.IResponseClient, h usecases.UserUCInterface) UserH
 	}
 }
 
+func (h *userHandler) LoginSocialMedia(w http.ResponseWriter, r *http.Request) {
+	provider := chi.URLParam(r, "provider")
+
+	data, err := h.usecase.LoginSocialMedia(provider)
+	if err != nil {
+		log.Println(err)
+		h.response.HttpError(w, common_error.NewError(common_error.DATA_INVALID, err))
+		return
+	}
+
+	h.response.JSON(w, "Login Social Media", data, nil)
+}
 func (h *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	postDTO := dto.RegisterReqDTO{}
@@ -94,6 +109,37 @@ func (h *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 		w,
 		"Successful Login",
 		data,
+		nil,
+	)
+}
+
+func (h *userHandler) LoginSocialMediaCallback(w http.ResponseWriter, r *http.Request) {
+	provider := chi.URLParam(r, "provider")
+
+	if provider == "google" {
+		h.LoginWithGoogleCallback(w, r)
+		return
+	}
+
+	h.response.HttpError(w, common_error.NewError(common_error.DATA_INVALID, nil))
+}
+
+func (h *userHandler) LoginWithGoogleCallback(w http.ResponseWriter, r *http.Request) {
+	// get code from query params
+	code := r.URL.Query().Get("code")
+
+	// get user info from google
+	userInfo, err := h.usecase.ExchangeCodeGoogle(r.Context(), code)
+	if err != nil {
+		log.Println(err)
+		h.response.HttpError(w, common_error.NewError(common_error.DATA_INVALID, err))
+		return
+	}
+
+	h.response.JSON(
+		w,
+		"Successful Login with Google",
+		userInfo,
 		nil,
 	)
 }

@@ -5,6 +5,7 @@ import (
 	mockDTO "ex_service/mocks/app/dto/user"
 	"testing"
 
+	mockGoogleInteg "ex_service/mocks/infra/integration/oauthgoogle"
 	mockRepo "ex_service/mocks/infra/persistence/postgres/user"
 	dto "ex_service/src/app/dto/user"
 
@@ -20,6 +21,7 @@ type UserUseCaseList struct {
 	suite.Suite
 	mockDTO        *mockDTO.MockUsersDTO
 	mockRepo       *mockRepo.MockUsersRepo
+	mockOauthInteg *mockGoogleInteg.MockOauthGoogleService
 	useCase        UserUCInterface
 	dtoRegisterReq *dto.RegisterReqDTO
 	dtoLoginReq    *dto.LoginReqDTO
@@ -29,7 +31,7 @@ type UserUseCaseList struct {
 func (suite *UserUseCaseList) SetupTest() {
 	suite.mockDTO = new(mockDTO.MockUsersDTO)
 	suite.mockRepo = new(mockRepo.MockUsersRepo)
-	suite.useCase = NewUserUseCase(suite.mockRepo)
+	suite.useCase = NewUserUseCase(suite.mockRepo, suite.mockOauthInteg)
 
 	suite.dtoRegisterReq = &dto.RegisterReqDTO{
 		UserName: "jody",

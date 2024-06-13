@@ -1,27 +1,32 @@
 package user
 
 import (
-	"log"
-
+	"context"
+	"errors"
 	dto "ex_service/src/app/dto/user"
-
+	helper "ex_service/src/infra/helper"
+	integ "ex_service/src/infra/integration/oauthgoogle"
 	repo "ex_service/src/infra/persistence/postgres/user"
 
-	helper "ex_service/src/infra/helper"
+	"log"
 )
 
 type UserUCInterface interface {
 	Register(data *dto.RegisterReqDTO) (*dto.RegisterRespDTO, error)
 	Login(data *dto.LoginReqDTO) (*dto.RegisterRespDTO, error)
+	LoginSocialMedia(provider string) (*dto.LoginSocialMediaRespDTO, error)
+	ExchangeCodeGoogle(ctx context.Context, code string) (*dto.UserInfoGoogleDTO, error)
 }
 
 type userUseCase struct {
-	Repo repo.UserRepository
+	Repo             repo.UserRepository
+	OauthGoogleInteg integ.OauthGoogleService
 }
 
-func NewUserUseCase(repo repo.UserRepository) UserUCInterface {
+func NewUserUseCase(repo repo.UserRepository, o integ.OauthGoogleService) UserUCInterface {
 	return &userUseCase{
-		Repo: repo,
+		Repo:             repo,
+		OauthGoogleInteg: o,
 	}
 }
 
@@ -56,4 +61,29 @@ func (uc *userUseCase) Login(data *dto.LoginReqDTO) (*dto.RegisterRespDTO, error
 	}
 
 	return result, nil
+}
+
+func (u *userUseCase) LoginSocialMedia(provider string) (*dto.LoginSocialMediaRespDTO, error) {
+	if provider == "google" {
+		url := u.OauthGoogleInteg.GetUrl("google")
+		return &dto.LoginSocialMediaRespDTO{Url: url}, nil
+	}
+
+	return nil, errors.New("provider not found")
+}
+
+func (u *userUseCase) ExchangeCodeGoogle(ctx context.Context, code string) (*dto.UserInfoGoogleDTO, error) {
+	token, err := u.OauthGoogleInteg.ExchangeCode(ctx, code)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	userInfo, err := u.OauthGoogleInteg.GetUser(ctx, token)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return userInfo, nil
 }

@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS ex_services;
+DROP TABLE IF EXISTS users;

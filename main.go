@@ -5,21 +5,15 @@ import (
 	"database/sql"
 
 	usecases "ex_service/src/app/usecases"
-
+	userUC "ex_service/src/app/usecases/user"
 	"ex_service/src/infra/config"
-
+	oauthGoogleInteg "ex_service/src/infra/integration/oauthgoogle"
+	ms_log "ex_service/src/infra/log"
 	postgres "ex_service/src/infra/persistence/postgres"
-
 	userRepo "ex_service/src/infra/persistence/postgres/user"
-
 	"ex_service/src/interface/rest"
 
-	ms_log "ex_service/src/infra/log"
-
-	userUC "ex_service/src/app/usecases/user"
-
 	_ "github.com/joho/godotenv/autoload"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -54,13 +48,14 @@ func main() {
 	}(logger, postgresdb.Conn.DB, postgresdb.Conn.DriverName())
 
 	userRepository := userRepo.NewUserRepository(postgresdb.Conn)
+	OauthGoogleIntegration := oauthGoogleInteg.NewOauthGoogleService()
 
 	httpServer, err := rest.New(
 		conf.Http,
 		isProd,
 		logger,
 		usecases.AllUseCases{
-			UserUC: userUC.NewUserUseCase(userRepository),
+			UserUC: userUC.NewUserUseCase(userRepository, OauthGoogleIntegration),
 		},
 	)
 	if err != nil {
