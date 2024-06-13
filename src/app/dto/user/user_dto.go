@@ -42,3 +42,18 @@ func (dto *LoginReqDTO) Validate() error {
 	}
 	return nil
 }
+
+type LoginSocialMediaRespDTO struct {
+	Url string `json:"url"`
+}
+
+type UserInfoGoogleDTO struct {
+	Id            string `json:"id"`
+	Email         string `json:"email"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	Locale        string `json:"locale"`
+	PicURL        string `json:"picture"`
+	VerifiedEmail bool   `json:"verified_email"`
+}

@@ -3,6 +3,14 @@ package config
 import (
 	"os"
 	"strconv"
+	"sync"
+
+	"github.com/sirupsen/logrus"
+)
+
+var (
+	Envs *Config // Envs is global vars Config.
+	once sync.Once
 )
 
 type AppConf struct {
@@ -43,6 +51,16 @@ type MongoDbConf struct {
 	DbName string
 }
 
+type OauthConf struct {
+	Google OauthGoogleConf
+}
+
+type OauthGoogleConf struct {
+	ClientID     string
+	ClientSecret string
+	CallbackURL  string
+}
+
 // Config ...
 type Config struct {
 	App   AppConf
@@ -50,10 +68,12 @@ type Config struct {
 	Log   LogConf
 	SqlDb SqlDbConf
 	Redis RedisConf
+	Oauth OauthConf
 }
 
 // NewConfig ...
 func Make() Config {
+	logrus.Info("loading config...")
 	app := AppConf{
 		Environment: os.Getenv("APP_ENV"),
 		Name:        os.Getenv("APP_NAME"),
@@ -78,8 +98,16 @@ func Make() Config {
 		XRequestID: os.Getenv("HTTP_REQUEST_ID"),
 	}
 
-	log := LogConf{
+	logs := LogConf{
 		Name: os.Getenv("LOG_NAME"),
+	}
+
+	oauth := OauthConf{
+		Google: OauthGoogleConf{
+			ClientID:     os.Getenv("OAUTH_GOOGLE_CLIENT_ID"),
+			ClientSecret: os.Getenv("OAUTH_GOOGLE_CLIENT_SECRET"),
+			CallbackURL:  os.Getenv("OAUTH_GOOGLE_CALLBACK_URL"),
+		},
 	}
 
 	// set default env to local
@@ -120,10 +148,16 @@ func Make() Config {
 	config := Config{
 		App:   app,
 		Http:  http,
-		Log:   log,
+		Log:   logs,
 		SqlDb: sqldb,
 		Redis: redis,
+		Oauth: oauth,
 	}
+
+	once.Do(func() {
+		logrus.Info("config loaded")
+		Envs = &config
+	})
 
 	return config
 }

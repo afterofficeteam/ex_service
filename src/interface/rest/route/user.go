@@ -13,6 +13,8 @@ func UserRouter(h handlers.UserHandlerInterface) http.Handler {
 
 	r.Post("/create_user", h.Register)
 	r.Post("/login", h.Login)
+	r.Get("/oauth/{provider}", h.LoginSocialMedia)
+	r.Get("/oauth/{provider}/callback", h.LoginSocialMediaCallback)
 
 	return r
 }
